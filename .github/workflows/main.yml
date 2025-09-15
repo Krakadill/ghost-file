@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   push:
 
+permissions:
+  contents: write   # needed if you push records.json
+
 jobs:
   password-sync:
     runs-on: ubuntu-latest
@@ -12,37 +15,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Restore password.data.json from cache
       - name: Restore password.data.json cache
         id: cache-restore
         uses: actions/cache@v4
         with:
-          path: password.data.json
+          path: src/password.data.json
           key: password-data-json
 
-      - name: Bootstrap password.data.json from template
+      - name: Read cached password
+        if: steps.cache-restore.outputs.cache-hit == 'true'
         run: |
-          if [ ! -f password.data.json ]; then
-            cp password.template.data.json password.data.json
-            echo "Created password.data.json from template."
-          else
-            echo "Using cached password.data.json."
-          fi
+          echo "Cached password.data.json found:"
+          cat src/password.data.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run password update tests
+      - name: Run password rotation test
         run: npm test
-        
-      - name: Read cached password.data.json
-        if: steps.cache-restore.outputs.cache-hit == 'true'
-        run: |
-          echo "Cached password file found:"
-          cat password.data.json
 
-      - name: Update cache with latest password.data.json
+      - name: Cache updated password.data.json
         if: always()
         uses: actions/cache@v4
         with:
-          path: password.data.json
+          path: src/password.data.json
           key: password-data-json
