@@ -1,0 +1,42 @@
+name: Password Sync Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  password-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore password.data.json cache
+        id: cache-restore
+        uses: actions/cache@v4
+        with:
+          path: password.data.json
+          key: password-data-json
+
+      - name: Bootstrap password.data.json if missing
+        run: |
+          if [ ! -f password.data.json ]; then
+            echo '{"email": "first@init.com", "password": "initPass123"}' > password.data.json
+            echo "new password file."
+          else
+            echo "Using cached password file."
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Save updated password.data.json
+        if: always()
+        uses: actions/cache@v4
+        with:
+          path: password.data.json
+          key: password-data-json
