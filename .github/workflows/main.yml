@@ -33,6 +33,12 @@ jobs:
 
       - name: Run password update tests
         run: npm test
+        
+      - name: Read cached password.data.json
+        if: steps.cache-restore.outputs.cache-hit == 'true'
+        run: |
+          echo "Cached password file found:"
+          cat password.data.json
 
       - name: Update cache with latest password.data.json
         if: always()
@@ -40,12 +46,3 @@ jobs:
         with:
           path: password.data.json
           key: password-data-json
-
-      - name: Update records.json in repo
-        run: |
-          cp password.data.json records.json
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add records.json
-          git commit -m "Update records.json with latest password" || echo "No changes to commit"
-          git push
