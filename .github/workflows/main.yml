@@ -19,24 +19,33 @@ jobs:
           path: password.data.json
           key: password-data-json
 
-      - name: Bootstrap password.data.json if missing
+      - name: Bootstrap password.data.json from template
         run: |
           if [ ! -f password.data.json ]; then
-            echo '{"email": "first@init.com", "password": "initPass123"}' > password.data.json
-            echo "new password file."
+            cp password.template.data.json password.data.json
+            echo "Created password.data.json from template."
           else
-            echo "Using cached password file."
+            echo "Using cached password.data.json."
           fi
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
+      - name: Run password update tests
         run: npm test
 
-      - name: Save updated password.data.json
+      - name: Update cache with latest password.data.json
         if: always()
         uses: actions/cache@v4
         with:
           path: password.data.json
           key: password-data-json
+
+      - name: Update records.json in repo
+        run: |
+          cp password.data.json records.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add records.json
+          git commit -m "Update records.json with latest password" || echo "No changes to commit"
+          git push
