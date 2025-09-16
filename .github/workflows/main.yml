@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   push:
 
-permissions:
-  contents: write   # needed if you push records.json
-
 jobs:
   password-sync:
     runs-on: ubuntu-latest
